@@ -1,47 +1,36 @@
 package com.example.user_service.service.impl;
 
 import com.example.user_service.entity.User;
-import com.example.user_service.entity.UserRole;
-import com.example.user_service.repository.UserRepository;
-import com.example.user_service.repository.UserRoleRepository;
-import com.example.user_service.service.UserService;
+import com.example.user_service.repository.IUserRepository;
+import com.example.user_service.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements IUserService {
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+    IUserRepository userRepository;
 
     @Override
-    public List<User> getAllUser() {
-        return userRepository.findAll();
+    public Optional<User> findByUsername(String name) {
+        return userRepository.findByUsername(name);
     }
 
     @Override
-    public User getUserById(Long id) {
-
-        return userRepository.getOne(id);
+    public Boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
     }
 
     @Override
-    public User getUserByName(String userName) {
-        return userRepository.findByUserName(userName);
+    public Boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     @Override
-    public User saveUser(User user) {
-
-        user.setActive(1); // active success
-        UserRole role = userRoleRepository.findUserRoleByRoleName("ROLE_USER");
-        user.setRole(role);
-
+    public User save(User user) {
         return userRepository.save(user);
     }
 }
