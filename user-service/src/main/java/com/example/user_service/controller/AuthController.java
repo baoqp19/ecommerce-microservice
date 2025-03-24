@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.user_service.dto.request.SignUpFrom;
 import com.example.user_service.dto.response.JwtResponse;
-import com.example.user_service.dto.response.ResponseMessge;
+import com.example.user_service.dto.response.ResponseMessage;
 import com.example.user_service.entity.Role;
 import com.example.user_service.entity.RoleName;
 import com.example.user_service.entity.User;
@@ -54,15 +54,15 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> register(@Valid @RequestBody SignUpFrom signUpFrom) {
         if (userService.existsByUsername(signUpFrom.getUsername())) {
-            return new ResponseEntity<>(new ResponseMessge("The username existed, please try again."),
+            return new ResponseEntity<>(new ResponseMessage("The username existed, please try again."),
                     HttpStatus.BAD_REQUEST);
         }
 
         if (userService.existsByEmail(signUpFrom.getEmail())) {
-            return new ResponseEntity<>(new ResponseMessge("The email existed, please try again."),
+            return new ResponseEntity<>(new ResponseMessage("The email existed, please try again."),
                     HttpStatus.BAD_REQUEST);
         }
-        
+
         User user = User.builder()
                 .name(signUpFrom.getName())
                 .username(signUpFrom.getUsername())
@@ -102,7 +102,7 @@ public class AuthController {
         user.setRoles(roles);
         userService.save(user);
 
-        return new ResponseEntity<>(new ResponseMessge("Create User Successfully."), HttpStatus.OK);
+        return new ResponseEntity<>(new ResponseMessage("Create User Successfully."), HttpStatus.OK);
     }
 
     @PostMapping("/signin")
@@ -115,6 +115,7 @@ public class AuthController {
 
         // generate token by authentication
         String token = jwtProvider.createToken(authentication);
+
         UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
 
         return ResponseEntity.ok(

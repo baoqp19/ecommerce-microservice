@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -19,11 +20,12 @@ public class JwtProvider {
 
     // ghi log
     private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
-    // thời gian sống của Token
-    private String jwtSecret = "hoangtien2k3";
-    // thời gian chết trên hệ thống
-    private int jwtExpiration = 86400;
 
+    @Value("${jwt.secret}")  // thời gian sống của Token
+    private String jwtSecret;
+    
+    @Value("${jwt.expiration}") // thời gian chết trên hệ thống
+    private int jwtExpiration;
     // Key để ký JWT
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
