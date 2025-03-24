@@ -8,10 +8,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 @SpringBootApplication
-@EnableJpaRepositories
-@EnableFeignClients
-@EnableWebSecurity
-@EnableRedisHttpSession
+// @EnableJpaRepositories
+// @EnableFeignClients
+// @EnableWebSecurity
+// @EnableRedisHttpSession
 public class OrderSerivceApplication {
 
 	public static void main(String[] args) {
