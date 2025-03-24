@@ -62,7 +62,7 @@ public class AuthController {
             return new ResponseEntity<>(new ResponseMessge("The email existed, please try again."),
                     HttpStatus.BAD_REQUEST);
         }
-
+        
         User user = User.builder()
                 .name(signUpFrom.getName())
                 .username(signUpFrom.getUsername())
