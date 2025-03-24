@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.product_service.dto.ProductRequest;
 import com.example.product_service.entity.Product;
 import com.example.product_service.http.HeaderGenerator;
 import com.example.product_service.service.ProductService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/admin")
+@Slf4j
+@RequestMapping("/api/admin")
 public class AdminProductController {
     @Autowired
     private ProductService productService;
@@ -27,17 +30,24 @@ public class AdminProductController {
     private HeaderGenerator headerGenerator;
 
     @PostMapping(value = "/products")
-    private ResponseEntity<Product> addProduct(@RequestBody Product product, HttpServletRequest request) {
-        if (product != null) {
+    private ResponseEntity<Product> addProduct(@RequestBody ProductRequest productRequest, HttpServletRequest request) {
+        if (productRequest != null) {
             try {
+                Product product = Product.builder()
+                        .productName(productRequest.getProductName())
+                        .price(productRequest.getPrice())
+                        .description(productRequest.getDescription())
+                        .category(productRequest.getCategory())
+                        .availability(productRequest.getAvailability())
+                        .build();
                 productService.addProduct(product);
-                return new ResponseEntity<Product>(
+                return new ResponseEntity<>(
                         product,
                         headerGenerator.getHeadersForSuccessPostMethod(request, product.getId()),
                         HttpStatus.CREATED);
             } catch (Exception e) {
-                e.printStackTrace();
-                return new ResponseEntity<Product>(
+                log.error("Product is not add list {}", productRequest.getProductName());
+                return new ResponseEntity<>(
                         headerGenerator.getHeadersForError(),
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -49,20 +59,20 @@ public class AdminProductController {
 
     @DeleteMapping(value = "/products/{id}")
     private ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) {
-        Product product = this.productService.getProductById(id);
+        Product product = productService.getProductById(id);
         if (product != null) {
             try {
-                this.productService.deleteProduct(id);
-                return new ResponseEntity<Void>(
+                productService.deleteProduct(id);
+                return new ResponseEntity<>(
                         headerGenerator.getHeadersForSuccessGetMethod(),
                         HttpStatus.OK);
             } catch (Exception e) {
                 e.printStackTrace();
-                return new ResponseEntity<Void>(
+                return new ResponseEntity<>(
                         headerGenerator.getHeadersForError(),
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        return new ResponseEntity<Void>(headerGenerator.getHeadersForError(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.NOT_FOUND);
     }
 }
