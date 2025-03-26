@@ -24,4 +24,9 @@ public class OrderController {
         return "Order Placed Successfully";
     }
 
+    @GetMapping
+    public String getString() {
+        return "Xin chaof banj nhas";
+    }
+
 }
