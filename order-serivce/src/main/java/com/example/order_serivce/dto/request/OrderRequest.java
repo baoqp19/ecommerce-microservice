@@ -6,13 +6,13 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import com.example.order_serivce.dto.OrderLineItemsDto;
+import com.example.order_serivce.dto.OrderItemsDto;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderRequest {
 
-    private List<OrderLineItemsDto> orderLineItemsDtoList;
+    private List<OrderItemsDto> orderItemsDtoList;
 
 }

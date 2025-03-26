@@ -19,7 +19,8 @@ public class JwtEntryPoint implements AuthenticationEntryPoint {
 
     // trường hợp lỗi token ngay đầu tiên
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+            AuthenticationException authException) throws IOException, ServletException {
         logger.error("Unauthentication errer Message {}", authException.getMessage());
         response.sendError(HttpServletResponse.SC_ACCEPTED, "Error -> Unauthentication");
     }

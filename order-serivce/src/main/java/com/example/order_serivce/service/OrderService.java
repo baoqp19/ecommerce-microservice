@@ -1,10 +1,10 @@
 package com.example.order_serivce.service;
 
-import com.example.order_serivce.dto.OrderLineItemsDto;
+import com.example.order_serivce.dto.OrderItemsDto;
 import com.example.order_serivce.dto.request.OrderRequest;
 import com.example.order_serivce.dto.response.InventoryResponse;
 import com.example.order_serivce.model.Order;
-import com.example.order_serivce.model.OrderLineItems;
+import com.example.order_serivce.model.OrderItems;
 import com.example.order_serivce.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,28 +28,28 @@ public class OrderService {
     public void placeOrder(OrderRequest orderRequest) {
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
-
-        List<OrderLineItems> orderLineItems = orderRequest.getOrderLineItemsDtoList()
+        List<OrderItems> orderItems = orderRequest
+                .getOrderItemsDtoList()
                 .stream()
-                .map(this::mapToDto)
+                .map(this::mapToOrderItemsDto)
                 .toList();
+        order.setOrderItemsList(orderItems);
 
-        order.setOrderLineItemsList(orderLineItems);
-
-        List<String> skuCodes = order.getOrderLineItemsList()
+        List<String> productNameList = order.getOrderItemsList()
                 .stream()
-                .map(OrderLineItems::getSkuCode)
+                .map(OrderItems::getProductName)
                 .toList();
 
         // Call inventory-service, and place order if product is in
         // stock
         InventoryResponse[] inventoryResponsesArray = webClient.get()
                 .uri("http://localhost:8083/api/inventory",
-                        uriBuilder -> uriBuilder.queryParam("skuCode", skuCodes).build())
+                        uriBuilder -> uriBuilder.queryParam("productName", productNameList).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
                 .block();
 
+        assert inventoryResponsesArray != null;
         boolean allProductsInStock = Arrays.stream(inventoryResponsesArray)
                 .allMatch(InventoryResponse::isInStock);
 
@@ -61,11 +61,11 @@ public class OrderService {
         }
     }
 
-    private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto) {
-        OrderLineItems orderLineItems = new OrderLineItems();
+    private OrderItems mapToOrderItemsDto(OrderItemsDto orderLineItemsDto) {
+        OrderItems orderLineItems = new OrderItems();
         orderLineItems.setPrice(orderLineItemsDto.getPrice());
         orderLineItems.setQuantity(orderLineItems.getQuantity());
-        orderLineItems.setSkuCode(orderLineItems.getSkuCode());
+        orderLineItems.setProductName(orderLineItems.getProductName());
         return orderLineItems;
     }
 

@@ -21,11 +21,12 @@ public class JwtProvider {
     // ghi log
     private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
 
-    @Value("${jwt.secret}")  // thời gian sống của Token
+    @Value("${jwt.secret}") // thời gian sống của Token
     private String jwtSecret;
-    
+
     @Value("${jwt.expiration}") // thời gian chết trên hệ thống
     private int jwtExpiration;
+
     // Key để ký JWT
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));

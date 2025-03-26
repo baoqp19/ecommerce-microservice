@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "order_line_items")
-public class OrderLineItems {
+@Table(name = "orderItems")
+public class OrderItems {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,8 +25,8 @@ public class OrderLineItems {
     @Column(name = "orderNumber")
     private String orderNumber;
 
-    @Column(name = "skuCode")
-    private String skuCode;
+    @Column(name = "productName")
+    private String productName;
 
     @Column(name = "price")
     private BigDecimal price;
