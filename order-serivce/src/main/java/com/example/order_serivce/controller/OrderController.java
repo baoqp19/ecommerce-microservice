@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.order_serivce.dto.OrderRequest;
+import com.example.order_serivce.dto.request.OrderRequest;
 import com.example.order_serivce.service.OrderService;
 
 @RequiredArgsConstructor

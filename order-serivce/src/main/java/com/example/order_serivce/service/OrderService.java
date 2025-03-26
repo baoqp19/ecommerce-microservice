@@ -1,8 +1,8 @@
 package com.example.order_serivce.service;
 
-import com.example.order_serivce.dto.InventoryResponse;
 import com.example.order_serivce.dto.OrderLineItemsDto;
-import com.example.order_serivce.dto.OrderRequest;
+import com.example.order_serivce.dto.request.OrderRequest;
+import com.example.order_serivce.dto.response.InventoryResponse;
 import com.example.order_serivce.model.Order;
 import com.example.order_serivce.model.OrderLineItems;
 import com.example.order_serivce.repository.OrderRepository;

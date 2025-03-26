@@ -1,4 +1,4 @@
-package com.example.order_serivce.dto;
+package com.example.order_serivce.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
