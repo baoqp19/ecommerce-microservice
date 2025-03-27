@@ -8,7 +8,6 @@ import com.example.order_serivce.model.OrderItems;
 import com.example.order_serivce.repository.OrderRepository;
 
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -77,8 +76,11 @@ public class OrderService {
             }
         } else {
             // Xử lý lỗi nếu có lỗi từ API
-            throw new RuntimeException("Failed to call inventory service. Status code: " + responseEntity.getStatusCode());
+            throw new RuntimeException(
+                    "Failed to call inventory service. Status code: " + responseEntity.getStatusCode());
         }
+
+        orderRepository.save(order);
     }
 
     private OrderItems mapToOrderItemsDto(OrderItemsDto orderLineItemsDto) {

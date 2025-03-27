@@ -18,7 +18,8 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/order/**").authenticated() // API order-service cần xác thực
+                        // .requestMatchers("/api/order/**").authenticated() // API order-service cần xác thực
+                        
                         .anyRequest().permitAll() // Các API khác cho phép truy cập tự do
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Không

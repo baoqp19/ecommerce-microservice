@@ -35,6 +35,11 @@ public class WebSecurityConfig {
         this.jwtEntryPoint = jwtEntryPoint;
     }
 
+    // @Bean
+    // public WebClient.Builder webClientBuilder() {
+    // return WebClient.builder();
+    // }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -55,7 +60,9 @@ public class WebSecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Tắt CSRF
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Cho phép truy cập API Auth
+                        .requestMatchers("/api/manager/token").permitAll()
                         .anyRequest().authenticated() // Các request khác cần xác thực
+                                                      // truy cập mà không cần xác
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtEntryPoint)) // Xử lý lỗi xác thực
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Không
