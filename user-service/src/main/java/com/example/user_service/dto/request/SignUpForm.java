@@ -11,7 +11,7 @@ import java.util.Set;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SignUpFrom {
+public class SignUpForm {
     private String name;
     private String username;
     private String email;

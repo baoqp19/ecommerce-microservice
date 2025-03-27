@@ -24,10 +24,14 @@ public class SenToken {
     @Autowired
     private TokenManager tokenManager;
 
+    @Autowired
+    private IUserRepository userRepository;
+
     @GetMapping("/token/{username}")
     public ResponseEntity<String> getTokenByUsername(@PathVariable("username") String username) {
-        // Kiểm tra xác thực người dùng ở đây (ví dụ: kiểm tra session hoặc cơ sở dữ liệu).
-        User user = userService.findByUsername(username)
+        // Kiểm tra xác thực người dùng ở đây (ví dụ: kiểm tra session hoặc cơ sở dữ
+        // liệu).
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found."));
 
         // Nếu người dùng đã đăng nhập và có token, lấy token và trả về cho họ.
@@ -39,7 +43,6 @@ public class SenToken {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token not found for the username.");
         }
     }
-
 
     @GetMapping("/token")
     public ResponseEntity<String> getToken() {

@@ -1,128 +1,68 @@
 package com.example.user_service.controller;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.user_service.dto.request.SignUpFrom;
+import com.example.user_service.dto.request.SignUpForm;
+import com.example.user_service.dto.request.TokenValidationRequest;
+import com.example.user_service.dto.request.TokenValidationResponse;
 import com.example.user_service.dto.response.JwtResponse;
 import com.example.user_service.dto.response.ResponseMessage;
-import com.example.user_service.entity.Role;
-import com.example.user_service.entity.RoleName;
-import com.example.user_service.entity.User;
-import com.example.user_service.security.jwt.JwtProvider;
-import com.example.user_service.security.userprinciple.UserPrinciple;
-import com.example.user_service.service.impl.RoleServiceImpl;
+import com.example.user_service.service.TokenValidationService;
 import com.example.user_service.service.impl.UserServiceImpl;
 
 import jakarta.validation.Valid;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private UserServiceImpl userService;
-    private final RoleServiceImpl roleService;
-    private final PasswordEncoder passwordEncoder;
-    private AuthenticationManager authenticationManager;
-    private final JwtProvider jwtProvider;
+    private final UserServiceImpl userService;
+    private final TokenValidationService tokenValidationService;
 
-    public AuthController(
-            UserServiceImpl userService,
-            RoleServiceImpl roleService,
-            PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager,
-            JwtProvider jwtProvider) {
-        this.authenticationManager = authenticationManager;
-        this.roleService = roleService;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtProvider = jwtProvider;
+    public AuthController(UserServiceImpl userService, TokenValidationService tokenValidationService) {
+        this.userService = userService;
+        this.tokenValidationService = tokenValidationService;
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> register(@Valid @RequestBody SignUpFrom signUpFrom) {
-        if (userService.existsByUsername(signUpFrom.getUsername())) {
-            return new ResponseEntity<>(
-                    new ResponseMessage("The username " + signUpFrom.getUsername() + " is existed, please try again."),
-                    HttpStatus.BAD_REQUEST);
-        }
-
-        if (userService.existsByEmail(signUpFrom.getEmail())) {
-            return new ResponseEntity<>(
-                    new ResponseMessage("The email " + signUpFrom.getEmail() + " is existed, please try again."),
-                    HttpStatus.BAD_REQUEST);
-        }
-
-        Set<Role> roles = new HashSet<>();
-
-        signUpFrom.getRoles().forEach(role -> {
-            switch (role) {
-                case "admin": {
-                    Role adminRole = roleService
-                            .findByName(RoleName.ADMIN)
-                            .orElseThrow(() -> new RuntimeException("Role not found."));
-                    roles.add(adminRole);
-                    break;
-                }
-                case "pm": {
-                    Role pmRole = roleService
-                            .findByName(RoleName.PM)
-                            .orElseThrow(() -> new RuntimeException("Role not found."));
-                    roles.add(pmRole);
-                    break;
-                }
-                default: {
-                    Role userRole = roleService
-                            .findByName(RoleName.USER)
-                            .orElseThrow(() -> new RuntimeException("Role not found."));
-                    roles.add(userRole);
-                    break;
-                }
-            }
-        });
-
-        User user = User.builder()
-                .name(signUpFrom.getName())
-                .username(signUpFrom.getUsername())
-                .email(signUpFrom.getEmail())
-                .password(passwordEncoder.encode(signUpFrom.getPassword()))
-                .avatar("https://www.facebook.com/photo/?fbid=723931439407032&set=pob.100053705482952")
-                .roles(roles)
-                .build();
-
-        userService.save(user);
-
-        return new ResponseEntity<>(new ResponseMessage("User: " + signUpFrom.getUsername() + " create successfully."),
-                HttpStatus.OK);
+    public Mono<ResponseEntity<ResponseMessage>> register(@Valid @RequestBody SignUpForm signUpForm) {
+        return userService.registerUser(signUpForm)
+                .map(user -> new ResponseEntity<>(
+                        new ResponseMessage("User: " + signUpForm.getUsername() + " create successfully."),
+                        HttpStatus.OK))
+                .onErrorResume(error -> Mono
+                        .just(new ResponseEntity<>(new ResponseMessage(error.getMessage()), HttpStatus.BAD_REQUEST)));
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> login(@Valid @RequestBody SignUpFrom signUpFrom) {
+    public Mono<ResponseEntity<JwtResponse>> login(@Valid @RequestBody SignUpForm signUpForm) {
+        return userService.login(signUpForm)
+                .map(ResponseEntity::ok)
+                .onErrorResume(error -> {
+                    JwtResponse errorResponse = new JwtResponse(null, null, null, null);
+                    return Mono.just(new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED));
+                });
+    }
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(signUpFrom.getUsername(), signUpFrom.getPassword()));
+    @PostMapping("/validateToken")
+    public ResponseEntity<?> validateToken(@RequestBody TokenValidationRequest validationRequest) {
+        String accessToken = validationRequest.getAccessToken();
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        boolean isValid = tokenValidationService.validateToken(accessToken);
 
-        // generate token by authentication
-        String token = jwtProvider.createToken(authentication);
-
-        UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
-
-        return ResponseEntity.ok(
-                new JwtResponse(token, userPrinciple.getId(), userPrinciple.getName(), userPrinciple.getAuthorities()));
+        if (isValid) {
+            // Token hợp lệ, có thể thực hiện các xử lý hoặc trả về thông báo thành công
+            return ResponseEntity.ok(new TokenValidationResponse("Valid token"));
+        } else {
+            // Token không hợp lệ hoặc hết hạn
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new TokenValidationResponse("Invalid token"));
+        }
     }
 
 }
