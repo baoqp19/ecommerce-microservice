@@ -4,7 +4,6 @@ import com.example.user_service.entity.Role;
 import com.example.user_service.entity.RoleName;
 import com.example.user_service.repository.IRoleRepository;
 import com.example.user_service.service.IRoleService;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

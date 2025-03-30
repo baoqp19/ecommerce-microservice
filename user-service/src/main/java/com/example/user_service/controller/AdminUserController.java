@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,17 +39,17 @@ public class AdminUserController {
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
     private final UserServiceImpl userService;
+
     @Value("${jwt.secret}")
     private String jwtSecret;
 
     public AdminUserController(IUserRepository userRepository, HeaderGenerator headerGenerator, JwtProvider jwtProvider,
-            AuthenticationManager authenticationManager, UserServiceImpl userService, String jwtSecret) {
+            AuthenticationManager authenticationManager, UserServiceImpl userService) {
         this.userRepository = userRepository;
         this.headerGenerator = headerGenerator;
         this.jwtProvider = jwtProvider;
         this.authenticationManager = authenticationManager;
         this.userService = userService;
-        this.jwtSecret = jwtSecret;
     }
 
     @GetMapping(value = "/user/{userName}")
@@ -72,7 +73,7 @@ public class AdminUserController {
                 .orElseThrow(() -> new UsernameNotFoundException("Not Found List User"));
 
         return new ResponseEntity<>(listUsers,
-                headerGenerator.getHeadersForError(),
+                headerGenerator.getHeadersForSuccessGetMethod(),
                 HttpStatus.OK);
     }
 
@@ -87,6 +88,15 @@ public class AdminUserController {
 
         // Trả về token trong phản hồi
         return ResponseEntity.ok(token);
+    }
+
+    @GetMapping("/user/page")
+    public ResponseEntity<Page<User>> getAllUsers(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<User> users = userService.getAllUsers(page, size);
+        return new ResponseEntity<>(users,
+                headerGenerator.getHeadersForSuccessGetMethod(),
+                HttpStatus.OK);
     }
 
     @GetMapping("/token")

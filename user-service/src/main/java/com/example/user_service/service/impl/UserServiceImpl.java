@@ -16,6 +16,9 @@ import com.example.user_service.service.IUserService;
 
 import reactor.core.publisher.Mono;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -72,7 +75,7 @@ public class UserServiceImpl implements IUserService {
             Set<Role> roles = new HashSet<>();
 
             signUpForm.getRoles().forEach(role -> {
-                switch (role) {
+                switch (role.toLowerCase()) {
                     case "admin" -> {
                         Role adminRole = roleRepository
                                 .findByName(RoleName.ADMIN)
@@ -160,5 +163,12 @@ public class UserServiceImpl implements IUserService {
     public Optional<List<User>> getAllUsers() {
         return Optional.ofNullable(userRepository.findAll());
     }
+
+      // load user by page and size
+     public Page<User> getAllUsers(int page, int size) {
+         Pageable pageable = PageRequest.of(page, size);
+         return userRepository.findAll(pageable);
+     }
+ 
 
 }
