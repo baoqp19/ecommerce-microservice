@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.user_service.dto.request.SignInForm;
 import com.example.user_service.dto.request.SignUpForm;
 import com.example.user_service.dto.request.TokenValidationRequest;
 import com.example.user_service.dto.request.TokenValidationResponse;
@@ -33,16 +34,16 @@ public class AuthController {
     @PostMapping("/signup")
     public Mono<ResponseEntity<ResponseMessage>> register(@Valid @RequestBody SignUpForm signUpForm) {
         return userService.registerUser(signUpForm)
-                .map(user -> new ResponseEntity<>(
+                .flatMap(user -> Mono.just(new ResponseEntity<>(
                         new ResponseMessage("User: " + signUpForm.getUsername() + " create successfully."),
-                        HttpStatus.OK))
+                        HttpStatus.OK)))
                 .onErrorResume(error -> Mono
                         .just(new ResponseEntity<>(new ResponseMessage(error.getMessage()), HttpStatus.BAD_REQUEST)));
     }
 
     @PostMapping("/signin")
-    public Mono<ResponseEntity<JwtResponse>> login(@Valid @RequestBody SignUpForm signUpForm) {
-        return userService.login(signUpForm)
+    public Mono<ResponseEntity<JwtResponse>> login(@Valid @RequestBody SignInForm signInForm) {
+        return userService.login(signInForm)
                 .map(ResponseEntity::ok)
                 .onErrorResume(error -> {
                     JwtResponse errorResponse = new JwtResponse(null, null, null, null);

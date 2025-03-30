@@ -34,12 +34,6 @@ public class WebSecurityConfig {
         this.userDetailsService = userDetailsService;
         this.jwtEntryPoint = jwtEntryPoint;
     }
-
-    // @Bean
-    // public WebClient.Builder webClientBuilder() {
-    // return WebClient.builder();
-    // }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

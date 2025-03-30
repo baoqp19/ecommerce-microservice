@@ -1,6 +1,7 @@
 package com.example.user_service.service.impl;
 
 import com.example.user_service.dto.model.TokenManager;
+import com.example.user_service.dto.request.SignInForm;
 import com.example.user_service.dto.request.SignUpForm;
 import com.example.user_service.dto.response.JwtResponse;
 import com.example.user_service.entity.Role;
@@ -9,42 +10,49 @@ import com.example.user_service.entity.User;
 import com.example.user_service.repository.IRoleRepository;
 import com.example.user_service.repository.IUserRepository;
 import com.example.user_service.security.jwt.JwtProvider;
+import com.example.user_service.security.userprinciple.UserDetailService;
 import com.example.user_service.security.userprinciple.UserPrinciple;
 import com.example.user_service.service.IUserService;
 
 import reactor.core.publisher.Mono;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
 public class UserServiceImpl implements IUserService {
 
-    private static IUserRepository userRepository;
-    private static IRoleRepository roleRepository;
-    private static PasswordEncoder passwordEncoder;
-    private static AuthenticationManager authenticationManager;
-    private static JwtProvider jwtProvider;
-    private static TokenManager tokenManager;
+    private final IUserRepository userRepository;
+    private final IRoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtProvider jwtProvider;
+    private final TokenManager tokenManager;
+    private final UserDetailService userDetailsService;
 
-    public UserServiceImpl(IUserRepository userRepository, IRoleRepository roleRepository,
-            PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtProvider jwtProvider,
-            TokenManager tokenManager) {
-        UserServiceImpl.userRepository = userRepository;
-        UserServiceImpl.roleRepository = roleRepository;
-        UserServiceImpl.passwordEncoder = passwordEncoder;
-        UserServiceImpl.authenticationManager = authenticationManager;
-        UserServiceImpl.jwtProvider = jwtProvider;
-        UserServiceImpl.tokenManager = tokenManager;
+    public UserServiceImpl(
+            IUserRepository userRepository,
+            IRoleRepository roleRepository,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtProvider jwtProvider,
+            TokenManager tokenManager,
+            UserDetailService userDetailsService) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtProvider = jwtProvider;
+        this.tokenManager = tokenManager;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -100,10 +108,22 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public Mono<JwtResponse> login(SignUpForm signUpFrom) {
+    public Mono<JwtResponse> login(SignInForm signInForm) {
         return Mono.defer(() -> {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(signUpFrom.getUsername(), signUpFrom.getPassword()));
+
+            String usernameOrEmail = signInForm.getUsername();
+
+            boolean isEmail = usernameOrEmail.contains("@");
+
+            UserDetails userDetails;
+            if (isEmail) {
+                userDetails = userDetailsService.loadUserByEmail(usernameOrEmail);
+            } else {
+                userDetails = userDetailsService.loadUserByUsername(usernameOrEmail);
+            }
+
+            Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails,
+                    signInForm.getPassword(), userDetails.getAuthorities());
 
             SecurityContextHolder
                     .getContext()
@@ -112,7 +132,7 @@ public class UserServiceImpl implements IUserService {
             // generate token by authentication
             String token = jwtProvider.createToken(authentication);
 
-            UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
+            UserPrinciple userPrinciple = (UserPrinciple) userDetails;
 
             // Lưu trữ tên người dùng và token bằng TokenManager
             tokenManager.storeToken(userPrinciple.getUsername(), token);
