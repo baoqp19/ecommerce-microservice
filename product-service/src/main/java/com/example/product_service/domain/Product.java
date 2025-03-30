@@ -1,18 +1,21 @@
 package com.example.product_service.domain;
 
+import java.io.Serial;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true, exclude = {"category"})
+@EqualsAndHashCode(callSuper = true, exclude = { "category" })
 @Data
 @Builder
 @Entity
 @Table(name = "products")
-public final class Product extends AbstractMappedEntity  {
+public final class Product extends AbstractMappedEntity {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

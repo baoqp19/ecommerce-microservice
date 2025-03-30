@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import jakarta.persistence.*;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 
@@ -11,10 +13,13 @@ import java.util.Set;
 @AllArgsConstructor
 @Data
 @Builder
-@EqualsAndHashCode(callSuper = true, exclude = {"subCategories", "parentCategory", "products"})
+@EqualsAndHashCode(callSuper = true, exclude = { "subCategories", "parentCategory", "products" })
 @Entity
 @Table(name = "categories")
 public final class Category extends AbstractMappedEntity implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

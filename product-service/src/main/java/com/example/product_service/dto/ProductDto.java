@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @NoArgsConstructor
@@ -14,6 +15,9 @@ import java.io.Serializable;
 @Data
 @Builder
 public class ProductDto implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L; // chuyển thành byte stream để lưu trữ hoặc truyền qua mạng
 
     private Integer productId;
     private String productTitle;
