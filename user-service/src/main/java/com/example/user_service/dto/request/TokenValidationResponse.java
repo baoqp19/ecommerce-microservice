@@ -1,5 +1,10 @@
 package com.example.user_service.dto.request;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class TokenValidationResponse {
     private String message;
 

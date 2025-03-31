@@ -6,6 +6,7 @@ import com.example.product_service.dto.CategoryDto;
 import com.example.product_service.dto.ProductDto;
 
 public interface ProductMappingHelper {
+        
     public static ProductDto map(final Product product) {
         return ProductDto.builder()
                 .productId(product.getProductId())
