@@ -27,6 +27,12 @@ public class InventoryController {
     @Autowired
     private final TokenValidationService tokenValidationService;
 
+    @Autowired
+    private final WebClient.Builder webClientBuilder;
+
+    @Value("${user-service.base-url}")
+    private String userServiceBaseUrl; // URL của user-service
+
     // http://localhost:8082/api/inventory/iphone-13,iphone13-red
 
     // http://localhost:8082/api/inventory?skuCode=iphone-13&skuCode=iphone13-red
@@ -37,6 +43,48 @@ public class InventoryController {
     // log.info("Received inventory check request for skuCode: {}", skuCode);
     // return inventoryService.isInStock(skuCode);
     // }
+
+    @GetMapping("/get-order-details")
+    public String getOrderDetails(@RequestHeader(name = "Authorization") String authorizationHeader) {
+        // Sử dụng JWT từ tiêu đề "Authorization" của yêu cầu gọi API
+        String jwtToken = authorizationHeader.replace("Bearer ", "");
+
+        // Sử dụng JWT trong tiêu đề của yêu cầu gọi API
+        String apiEndpoint = userServiceBaseUrl + "/api/manager"; // URL của API trong user-service
+        String response = webClientBuilder.baseUrl(apiEndpoint)
+                .build()
+                .get()
+                .uri("/token")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        return response;
+    }
+
+    @GetMapping("/list")
+    @ResponseStatus(HttpStatus.OK)
+    public Mono<List<InventoryResponse>> isInStockAccessToken(@RequestParam List<String> productName,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        log.info("Received inventory check request for skuCode: {}", productName);
+
+        // Trích xuất token từ header "Authorization"
+        String token = extractTokenFromAuthorizationHeader(authorizationHeader);
+
+        // Gửi access token đến user-service để xác thực
+        return inventoryService.requestTokenValidation(token)
+                .flatMap(validationMessage -> {
+                    if ("Valid token".equals(validationMessage)) {
+                        // Access token hợp lệ, tiếp tục xử lý yêu cầu
+                        return Mono.just(inventoryService.isInStock(productName, token));
+                    } else {
+                        // Access token không hợp lệ, trả về lỗi hoặc xử lý khác tùy ý
+                        return Mono.error(new UnauthorizedException("Invalid token"));
+                    }
+                });
+    }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)

@@ -10,14 +10,18 @@ import com.example.payment_service.service.PaymentService;
 
 import jakarta.transaction.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Transactional
 @Slf4j
@@ -30,6 +34,9 @@ public class PaymentServiceImpl implements PaymentService {
     @Autowired
     private final RestTemplate restTemplate;
 
+    @Autowired
+    private final WebClient.Builder webClientBuilder;
+
     @Override
     public List<PaymentDto> findAll() {
         log.info("PaymentDto List, service; fetch all payments");
@@ -38,7 +45,8 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(PaymentMappingHelper::map)
                 .map(p -> {
                     p.setOrderDto(restTemplate
-                            .getForObject(AppConstant.DiscoveredDomainsApi.ORDER_SERVICE_API_URL + "/" + p.getOrderDto().getOrderId(), OrderDto.class));
+                            .getForObject(AppConstant.DiscoveredDomainsApi.ORDER_SERVICE_API_URL + "/"
+                                    + p.getOrderDto().getOrderId(), OrderDto.class));
                     return p;
                 })
                 .distinct()
@@ -51,11 +59,13 @@ public class PaymentServiceImpl implements PaymentService {
         return this.paymentRepository.findById(paymentId)
                 .map(PaymentMappingHelper::map)
                 .map(p -> {
-                    p.setOrderDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-                            .ORDER_SERVICE_API_URL + "/" + p.getOrderDto().getOrderId(), OrderDto.class));
+                    p.setOrderDto(this.restTemplate.getForObject(
+                            AppConstant.DiscoveredDomainsApi.ORDER_SERVICE_API_URL + "/" + p.getOrderDto().getOrderId(),
+                            OrderDto.class));
                     return p;
                 })
-                .orElseThrow(() -> new PaymentNotFoundException(String.format("Payment with id[%d] not found", paymentId)));
+                .orElseThrow(
+                        () -> new PaymentNotFoundException(String.format("Payment with id[%d] not found", paymentId)));
     }
 
     @Override
@@ -77,5 +87,20 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Void, service; delete payment by id");
         this.paymentRepository.deleteById(paymentId);
     }
+
+    @Override
+    public Mono<List<String>> callServiceB(String serviceBUrl) {
+        WebClient webClient = webClientBuilder.baseUrl(serviceBUrl).build();
+
+        Flux<String> responseFlux = webClient
+                .get()
+                .retrieve()
+                .bodyToFlux(String.class);
+
+        return responseFlux
+                .collectList()
+                .map(responseList -> responseList != null ? responseList : Collections.emptyList());
+    }
+    
 
 }
