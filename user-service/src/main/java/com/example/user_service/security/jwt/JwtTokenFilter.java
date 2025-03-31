@@ -19,7 +19,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
 
@@ -33,7 +32,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     // tìm token trong request
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         try {
 
             // lấy ra token trong request
@@ -42,11 +43,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 String username = jwtProvider.getUserNameFromToken(token);
                 UserDetails userDetails = userDetailService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
+                        userDetails, null, userDetails.getAuthorities());
 
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                // Tạo mới refresh token
+                String refreshToken = jwtProvider.createRefreshToken(authenticationToken);
+
+                // Gửi cả token và refresh token về cho người dùng
+                response.setHeader("Authorization", "Bearer " + token);
+                response.setHeader("Refresh-Token", refreshToken);
             }
 
         } catch (Exception e) {

@@ -1,6 +1,6 @@
 package com.example.order_serivce.controller;
 
-
+import com.example.order_serivce.config.jwt.JwtUtil;
 import com.example.order_serivce.dto.CartDto;
 import com.example.order_serivce.dto.response.collection.DtoCollectionResponse;
 import com.example.order_serivce.service.CartService;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,14 +40,17 @@ public class CartController {
     }
 
     @GetMapping("/{cartId}")
-    public ResponseEntity<CartDto> findById(
+    public ResponseEntity<CartDto> findById(@RequestHeader(name = "Authorization") String authorizationHeader,
             @PathVariable("cartId") @NotBlank(message = "Input must not be blank") @Valid final String cartId) {
-        log.info("CartDto, resource; fetch cart by id");
-        return ResponseEntity.ok(this.cartService.findById(Integer.parseInt(cartId)));
+        if (JwtUtil.validateToken(authorizationHeader)) {
+            log.info("CartDto, resource; fetch cart by id");
+            return ResponseEntity.ok(this.cartService.findById(Integer.parseInt(cartId)));
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public ResponseEntity<CartDto> save(
+    public ResponseEntity<CartDto> save(@RequestHeader(name = "Authorization") String authorizationHeader,
             @RequestBody @NotNull(message = "Input must not be NULL!") @Valid final CartDto cartDto) {
         log.info("CartDto, resource; save cart");
         return ResponseEntity.ok(this.cartService.save(cartDto));

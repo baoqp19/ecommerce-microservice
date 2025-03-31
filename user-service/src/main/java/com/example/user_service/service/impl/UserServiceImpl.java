@@ -13,12 +13,16 @@ import com.example.user_service.security.jwt.JwtProvider;
 import com.example.user_service.security.userprinciple.UserDetailService;
 import com.example.user_service.security.userprinciple.UserPrinciple;
 import com.example.user_service.service.IUserService;
+import com.example.user_service.service.validate.TokenValidate;
 
 import reactor.core.publisher.Mono;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,6 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +47,12 @@ public class UserServiceImpl implements IUserService {
     private final JwtProvider jwtProvider;
     private final TokenManager tokenManager;
     private final UserDetailService userDetailsService;
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${refresh.token.url}") // Đường dẫn endpoint để refresh token
+    private String refreshTokenUrl;
 
     public UserServiceImpl(
             IUserRepository userRepository,
@@ -135,21 +146,42 @@ public class UserServiceImpl implements IUserService {
                     .setAuthentication(authentication);
 
             // generate token by authentication
-            String token = jwtProvider.createToken(authentication);
+            // Generate token and refresh token using JwtProvider
+            String accessToken = jwtProvider.createToken(authentication);
+            String refreshToken = jwtProvider.createRefreshToken(authentication);
 
             UserPrinciple userPrinciple = (UserPrinciple) userDetails;
 
-            // Lưu trữ tên người dùng và token bằng TokenManager
-            tokenManager.storeToken(userPrinciple.getUsername(), token);
+            // Store the token and refresh token using TokenManager
+            tokenManager.storeToken(userPrinciple.getUsername(), accessToken);
+            tokenManager.storeRefreshToken(userPrinciple.getUsername(), refreshToken);
 
             JwtResponse jwtResponse = new JwtResponse(
-                    token,
+                    accessToken,
+                    refreshToken,
                     userPrinciple.getId(),
                     userPrinciple.getName(),
                     userPrinciple.getAuthorities());
 
             return Mono.just(jwtResponse);
         });
+    }
+
+    public Mono<String> refreshToken(String refreshToken) {
+        return webClientBuilder.build()
+                .post()
+                .uri(refreshTokenUrl)
+                .header("Refresh-Token", refreshToken)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError(),
+                        clientResponse -> Mono.error(new IllegalArgumentException("Refresh token không hợp lệ")))
+                .bodyToMono(JwtResponse.class)
+                .map(JwtResponse::getAccessToken); // Sử dụng getAccessToken để lấy token từ JwtResponse
+    }
+
+    // validate token -> send RequestHeader
+    public static boolean validateToken(String token) {
+        return TokenValidate.validateToken(token);
     }
 
     public boolean existsByUsername(String username) {
@@ -164,11 +196,10 @@ public class UserServiceImpl implements IUserService {
         return Optional.ofNullable(userRepository.findAll());
     }
 
-      // load user by page and size
-     public Page<User> getAllUsers(int page, int size) {
-         Pageable pageable = PageRequest.of(page, size);
-         return userRepository.findAll(pageable);
-     }
- 
+    // load user by page and size
+    public Page<User> getAllUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findAll(pageable);
+    }
 
 }

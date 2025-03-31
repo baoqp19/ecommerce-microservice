@@ -27,6 +27,9 @@ public class JwtProvider {
     @Value("${jwt.expiration}") // thời gian chết trên hệ thống
     private int jwtExpiration;
 
+    @Value("${jwt.refreshExpiration}")
+    private int jwtRefreshExpiration;
+
     // Key để ký JWT
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
@@ -41,6 +44,19 @@ public class JwtProvider {
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String createRefreshToken(Authentication authentication) {
+        UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
+
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+
+        return Jwts.builder()
+                .setSubject(userPrinciple.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtRefreshExpiration * 1000L))
+                .signWith(key, SignatureAlgorithm.HS512) // 🔥 SỬA Ở ĐÂY
                 .compact();
     }
 

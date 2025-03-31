@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 
 @Transactional
 @Slf4j
@@ -36,11 +34,9 @@ public class CartServiceImpl implements CartService {
         return this.cartRepository.findAll()
                 .stream()
                 .map(CartMappingHelper::map)
-                .map(c -> {
-                    c.setUserDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-                            .USER_SERVICE_API_URL + "/" + c.getUserDto().getUserId(), UserDto.class));
-                    return c;
-                })
+                .peek(c -> c.setUserDto(this.restTemplate.getForObject(
+                        AppConstant.DiscoveredDomainsApi.USER_SERVICE_API_URL + "/" + c.getUserDto().getUserId(),
+                        UserDto.class)))
                 .distinct()
                 .toList();
     }
@@ -51,8 +47,9 @@ public class CartServiceImpl implements CartService {
         return this.cartRepository.findById(cartId)
                 .map(CartMappingHelper::map)
                 .map(c -> {
-                    c.setUserDto(this.restTemplate.getForObject(AppConstant.DiscoveredDomainsApi
-                            .USER_SERVICE_API_URL + "/" + c.getUserDto().getUserId(), UserDto.class));
+                    c.setUserDto(this.restTemplate.getForObject(
+                            AppConstant.DiscoveredDomainsApi.USER_SERVICE_API_URL + "/" + c.getUserDto().getUserId(),
+                            UserDto.class));
                     return c;
                 })
                 .orElseThrow(() -> new CartNotFoundException(String

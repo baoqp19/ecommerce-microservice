@@ -15,9 +15,13 @@ import com.example.user_service.dto.response.JwtResponse;
 import com.example.user_service.dto.response.ResponseMessage;
 import com.example.user_service.service.TokenValidationService;
 import com.example.user_service.service.impl.UserServiceImpl;
+import com.example.user_service.service.validate.TokenValidate;
+
 
 import jakarta.validation.Valid;
 import reactor.core.publisher.Mono;
+
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,10 +29,15 @@ public class AuthController {
 
     private final UserServiceImpl userService;
     private final TokenValidationService tokenValidationService;
+    private final TokenValidate tokenValidate;
 
-    public AuthController(UserServiceImpl userService, TokenValidationService tokenValidationService) {
+    public AuthController(
+            UserServiceImpl userService,
+            TokenValidationService tokenValidationService,
+            TokenValidate tokenValidate) {
         this.userService = userService;
         this.tokenValidationService = tokenValidationService;
+        this.tokenValidate = tokenValidate;
     }
 
     @PostMapping("/signup")
